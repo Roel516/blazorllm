@@ -28,7 +28,8 @@ A modern Blazor web application featuring AI-powered tools using HuggingFace mod
 
 1. Clone the repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/Roel516/blazorllm.git
+cd blazorllm
 ```
 
 2. Configure your HuggingFace API key in `MyBlazorApp/appsettings.json`:
