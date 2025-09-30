@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
+using MyBlazorApp.Models;
+using MyBlazorApp.Constants;
 
 namespace MyBlazorApp.Controllers;
 
@@ -25,68 +27,74 @@ public class ImageController : ControllerBase
     [HttpPost("generate")]
     public async Task<IActionResult> GenerateImage([FromBody] ImageRequest request)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         try
         {
-            var apiKey = _configuration["HuggingFace:ApiKey"];
-            var model = _configuration["HuggingFace:ImageModel"] ?? "black-forest-labs/FLUX.1-schnell";
+            var apiKey = _configuration[ApiConstants.ConfigKeys.HuggingFaceApiKey];
+            var imageModel = _configuration[ApiConstants.ConfigKeys.HuggingFaceImageModel]
+                ?? ApiConstants.DefaultValues.DefaultImageModel;
 
             if (string.IsNullOrEmpty(apiKey))
             {
-                return BadRequest(new { error = "HuggingFace API key not configured" });
+                _logger.LogError("HuggingFace API key not configured");
+                return BadRequest(new { error = ApiConstants.ErrorMessages.ApiKeyNotConfigured });
             }
 
-            var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-            client.Timeout = TimeSpan.FromMinutes(2); // Image generation can take time
+            var client = _httpClientFactory.CreateClient("ImageGenerationClient");
 
-            var payload = new
-            {
-                inputs = request.Prompt
-            };
+            var payload = new { inputs = request.Prompt };
 
-            var content = new StringContent(
+            using (var content = new StringContent(
                 JsonSerializer.Serialize(payload),
                 Encoding.UTF8,
-                "application/json");
-
-            var response = await client.PostAsync(
-                $"https://api-inference.huggingface.co/models/{model}",
-                content);
-
-            if (!response.IsSuccessStatusCode)
+                "application/json"))
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("HuggingFace API error: {StatusCode} - {Response}",
-                    response.StatusCode, errorContent);
-                return StatusCode((int)response.StatusCode,
-                    new { error = "Error from HuggingFace API", details = errorContent });
+                var modelUrl = $"{ApiConstants.Endpoints.ImageInferenceBase}{imageModel}";
+                var response = await client.PostAsync(modelUrl, content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("HuggingFace Image API error: {StatusCode} - Response length: {Length}",
+                        response.StatusCode, errorContent.Length);
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+                    {
+                        return StatusCode(503, new { error = "Model is loading. Please try again in a moment." });
+                    }
+
+                    return StatusCode((int)response.StatusCode,
+                        new { error = "Error generating image" });
+                }
+
+                var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                var base64Image = Convert.ToBase64String(imageBytes);
+
+                return Ok(new ImageResponse
+                {
+                    ImageData = $"data:image/png;base64,{base64Image}"
+                });
             }
-
-            // Get the image bytes
-            var imageBytes = await response.Content.ReadAsByteArrayAsync();
-
-            // Convert to base64 for easy transfer to frontend
-            var base64Image = Convert.ToBase64String(imageBytes);
-
-            return Ok(new ImageResponse
-            {
-                ImageData = $"data:image/jpeg;base64,{base64Image}"
-            });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP error processing image generation request");
+            return StatusCode(503, new { error = ApiConstants.ErrorMessages.InternalServerError });
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "Timeout processing image generation request");
+            return StatusCode(504, new { error = "Image generation timed out. Please try again with a simpler prompt." });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing image generation request");
-            return StatusCode(500, new { error = "Internal server error", message = ex.Message });
+            _logger.LogError(ex, "Error processing image generation for prompt length: {Length}",
+                request.Prompt?.Length ?? 0);
+            return StatusCode(500, new { error = ApiConstants.ErrorMessages.InternalServerError });
         }
     }
-}
-
-public class ImageRequest
-{
-    public string Prompt { get; set; } = string.Empty;
-}
-
-public class ImageResponse
-{
-    public string ImageData { get; set; } = string.Empty;
 }
