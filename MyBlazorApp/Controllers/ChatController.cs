@@ -36,8 +36,8 @@ public class ChatController : ControllerBase
         try
         {
             var apiKey = _configuration[ApiConstants.ConfigKeys.HuggingFaceApiKey];
-            var model = _configuration[ApiConstants.ConfigKeys.HuggingFaceModel]
-                ?? ApiConstants.DefaultValues.DefaultModel;
+            var model = _configuration[ApiConstants.ConfigKeys.HuggingFaceChatModel]
+                ?? ApiConstants.DefaultValues.DefaultChatModel;
 
             if (string.IsNullOrEmpty(apiKey))
             {

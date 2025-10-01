@@ -5,8 +5,10 @@ public static class ApiConstants
     public static class ConfigKeys
     {
         public const string HuggingFaceApiKey = "HuggingFace:ApiKey";
-        public const string HuggingFaceModel = "HuggingFace:Model";
+        public const string HuggingFaceChatModel = "HuggingFace:ChatModel";
         public const string HuggingFaceImageModel = "HuggingFace:ImageModel";
+        public const string HuggingFaceTranslationModelEnZh = "HuggingFace:TranslationModelEnZh";
+        public const string HuggingFaceTranslationModelZhEn = "HuggingFace:TranslationModelZhEn";
         public const string ApiBaseUrl = "ApiSettings:BaseUrl";
     }
 
@@ -35,8 +37,10 @@ public static class ApiConstants
 
     public static class DefaultValues
     {
-        public const string DefaultModel = "google/gemma-2-2b-it";
+        public const string DefaultChatModel = "google/gemma-2-2b-it";
         public const string DefaultImageModel = "black-forest-labs/FLUX.1-schnell";
+        public const string DefaultTranslationModelEnZh = "Helsinki-NLP/opus-mt-en-zh";
+        public const string DefaultTranslationModelZhEn = "Helsinki-NLP/opus-mt-zh-en";
         public const int DefaultChatMaxTokens = 500;
         public const double DefaultChatTemperature = 0.7;
         public const double DefaultPinyinTemperature = 0.3;

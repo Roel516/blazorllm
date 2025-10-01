@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
+using MyBlazorApp.Constants;
 
 namespace MyBlazorApp.Controllers;
 
@@ -27,11 +28,11 @@ public class TranslateController : ControllerBase
     {
         try
         {
-            var apiKey = _configuration["HuggingFace:ApiKey"];
+            var apiKey = _configuration[ApiConstants.ConfigKeys.HuggingFaceApiKey];
 
             if (string.IsNullOrEmpty(apiKey))
             {
-                return BadRequest(new { error = "HuggingFace API key not configured" });
+                return BadRequest(new { error = ApiConstants.ErrorMessages.ApiKeyNotConfigured });
             }
 
             var client = _httpClientFactory.CreateClient();
@@ -39,8 +40,8 @@ public class TranslateController : ControllerBase
 
             // Use different translation models based on direction
             string model = request.Direction == "en-to-zh"
-                ? "Helsinki-NLP/opus-mt-en-zh"
-                : "Helsinki-NLP/opus-mt-zh-en";
+                ? _configuration[ApiConstants.ConfigKeys.HuggingFaceTranslationModelEnZh] ?? ApiConstants.DefaultValues.DefaultTranslationModelEnZh
+                : _configuration[ApiConstants.ConfigKeys.HuggingFaceTranslationModelZhEn] ?? ApiConstants.DefaultValues.DefaultTranslationModelZhEn;
 
             var payload = new
             {
@@ -106,7 +107,7 @@ public class TranslateController : ControllerBase
         try
         {
             // Use an LLM to generate pinyin
-            var model = _configuration["HuggingFace:Model"] ?? "google/gemma-2-2b-it";
+            var model = _configuration[ApiConstants.ConfigKeys.HuggingFaceChatModel] ?? ApiConstants.DefaultValues.DefaultChatModel;
 
             var payload = new
             {
