@@ -30,4 +30,4 @@ metadata:
 type: Opaque
 stringData:
   # Replace with your actual HuggingFace API key
-  HuggingFace__ApiKey: "your api key here"
+  HuggingFace__ApiKey: "your-huggingface-api-key-here"
