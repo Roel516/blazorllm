@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "myblazorapp.fullname" . }}
+  labels:
+    {{- include "myblazorapp.labels" . | nindent 4 }}
+data:
+  # CORS configuration
+  {{- range $index, $origin := .Values.config.allowedOrigins }}
+  AllowedOrigins__{{ $index }}: {{ $origin | quote }}
+  {{- end }}
+
+  # Rate limiting configuration
+  IpRateLimiting__EnableEndpointRateLimiting: {{ .Values.config.rateLimiting.enableEndpointRateLimiting | quote }}
+  IpRateLimiting__StackBlockedRequests: {{ .Values.config.rateLimiting.stackBlockedRequests | quote }}
+  IpRateLimiting__HttpStatusCode: {{ .Values.config.rateLimiting.httpStatusCode | quote }}
+  {{- range $index, $rule := .Values.config.rateLimiting.generalRules }}
+  IpRateLimiting__GeneralRules__{{ $index }}__Endpoint: {{ $rule.endpoint | quote }}
+  IpRateLimiting__GeneralRules__{{ $index }}__Period: {{ $rule.period | quote }}
+  IpRateLimiting__GeneralRules__{{ $index }}__Limit: {{ $rule.limit | quote }}
+  {{- end }}
+
+  # API Settings
+  ApiSettings__MaxRequestSizeBytes: {{ .Values.config.apiSettings.maxRequestSizeBytes | quote }}
+  ApiSettings__RequestTimeout: {{ .Values.config.apiSettings.requestTimeout | quote }}

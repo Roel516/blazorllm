@@ -190,8 +190,7 @@
 
         try
         {
-            var client = HttpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("http://localhost:5000");
+            var client = HttpClientFactory.CreateClient("ApiClient");
             client.Timeout = TimeSpan.FromMinutes(2);
 
             var response = await client.PostAsJsonAsync("/api/image/generate", new { prompt = prompt });

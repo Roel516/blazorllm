@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myblazorapp-config
+  labels:
+    app: myblazorapp
+data:
+  # CORS configuration
+  AllowedOrigins__0: "http://localhost"
+  AllowedOrigins__1: "https://localhost"
+
+  # Rate limiting configuration
+  IpRateLimiting__EnableEndpointRateLimiting: "true"
+  IpRateLimiting__StackBlockedRequests: "false"
+  IpRateLimiting__HttpStatusCode: "429"
+  IpRateLimiting__GeneralRules__0__Endpoint: "*"
+  IpRateLimiting__GeneralRules__0__Period: "1m"
+  IpRateLimiting__GeneralRules__0__Limit: "60"
+
+  # API Settings
+  ApiSettings__MaxRequestSizeBytes: "10485760"
+  ApiSettings__RequestTimeout: "00:00:30"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: myblazorapp-secrets
+  labels:
+    app: myblazorapp
+type: Opaque
+stringData:
+  # Replace with your actual HuggingFace API key
+  HuggingFace__ApiKey: "your api key here"

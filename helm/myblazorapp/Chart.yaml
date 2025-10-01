@@ -1,0 +1,14 @@
+apiVersion: v2
+name: myblazorapp
+description: A Helm chart for MyBlazorApp - AI Studio with Blazor
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - blazor
+  - ai
+  - huggingface
+  - dotnet
+maintainers:
+  - name: Roel van Caspel
+home: https://github.com/Roel516/blazorllm

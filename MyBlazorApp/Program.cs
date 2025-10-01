@@ -35,6 +35,15 @@ builder.Services.AddCors(options =>
         });
 });
 
+// Configure default HttpClient for internal API calls
+builder.Services.AddHttpClient("ApiClient", (serviceProvider, client) =>
+{
+    var config = serviceProvider.GetRequiredService<IConfiguration>();
+    var baseUrl = config["ApiSettings:BaseUrl"] ?? "http://localhost:5000";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // Configure HttpClients with proper timeouts and headers
 builder.Services.AddHttpClient("HuggingFaceClient", client =>
 {

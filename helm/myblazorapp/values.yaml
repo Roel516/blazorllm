@@ -1,0 +1,121 @@
+# Default values for myblazorapp
+replicaCount: 3
+
+image:
+  repository: myblazorapp
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: myblazorapp.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: myblazorapp-tls
+  #    hosts:
+  #      - myblazorapp.local
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Application configuration
+config:
+  aspnetcoreEnvironment: Production
+  aspnetcoreUrls: "http://+:8080"
+
+  # CORS configuration
+  allowedOrigins:
+    - "http://localhost"
+    - "https://localhost"
+
+  # Rate limiting configuration
+  rateLimiting:
+    enableEndpointRateLimiting: true
+    stackBlockedRequests: false
+    httpStatusCode: 429
+    generalRules:
+      - endpoint: "*"
+        period: "1m"
+        limit: 60
+
+  # API Settings
+  apiSettings:
+    maxRequestSizeBytes: 10485760
+    requestTimeout: "00:00:30"
+
+# HuggingFace API configuration
+huggingface:
+  # Create a Kubernetes secret with your API key:
+  # kubectl create secret generic myblazorapp-secrets --from-literal=apiKey=your-api-key-here
+  existingSecret: ""
+  apiKey: ""  # Only used if existingSecret is not set
+
+# Health check configuration
+healthCheck:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Readiness probe configuration
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3

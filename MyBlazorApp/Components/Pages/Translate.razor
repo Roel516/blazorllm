@@ -183,8 +183,7 @@
 
         try
         {
-            var client = HttpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("http://localhost:5000");
+            var client = HttpClientFactory.CreateClient("ApiClient");
 
             var response = await client.PostAsJsonAsync("/api/translate/translate", new
             {

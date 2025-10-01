@@ -1,0 +1,80 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+{{- if eq .Values.service.type "LoadBalancer" }}
+
+It may take a few minutes for the LoadBalancer IP to be available.
+You can watch the status by running:
+
+  $ kubectl get svc --namespace {{ .Release.Namespace }} -w {{ include "myblazorapp.fullname" . }}
+
+Once the EXTERNAL-IP is available, access your application.
+
+For Docker Desktop (Windows/Mac), the service is available at:
+
+  http://localhost:{{ .Values.service.port }}
+
+For other environments, get the external IP with:
+
+  Linux/Mac:
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "myblazorapp.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.service.port }}
+
+  Windows PowerShell:
+  $SERVICE_IP = kubectl get svc --namespace {{ .Release.Namespace }} {{ include "myblazorapp.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+  echo "http://$($SERVICE_IP):{{ .Values.service.port }}"
+
+{{- else if eq .Values.service.type "ClusterIP" }}
+
+To access your application, run:
+
+  Linux/Mac:
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "myblazorapp.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:8080
+
+  Windows PowerShell:
+  $POD_NAME = kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "myblazorapp.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:8080
+
+  Then visit http://127.0.0.1:8080
+
+{{- else if eq .Values.service.type "NodePort" }}
+
+To access your application, run:
+
+  Linux/Mac:
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "myblazorapp.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+
+  Windows PowerShell:
+  $NODE_PORT = kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "myblazorapp.fullname" . }}
+  $NODE_IP = kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}"
+  echo "http://$($NODE_IP):$($NODE_PORT)"
+
+{{- end }}
+
+{{- if not (or .Values.huggingface.existingSecret .Values.huggingface.apiKey) }}
+
+WARNING: You have not configured a HuggingFace API key!
+
+The application requires a HuggingFace API key to function properly.
+Please create a secret with your API key:
+
+  kubectl create secret generic {{ include "myblazorapp.fullname" . }}-secrets \
+    --namespace {{ .Release.Namespace }} \
+    --from-literal=HuggingFace__ApiKey=your-api-key-here
+
+Then restart the pods to pick up the new secret:
+
+  kubectl rollout restart deployment {{ include "myblazorapp.fullname" . }} --namespace {{ .Release.Namespace }}
+
+{{- end }}
+
+Health check endpoint: /health
